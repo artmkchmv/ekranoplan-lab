@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Экраноплан-лаборатория</title>
+<meta name="description" content="Учебный 3D-симулятор экраноплана ОРОС-1 и его аналогов: как экранный эффект помогает крылу.">
+<meta name="theme-color" content="#111417">
+<link rel="stylesheet" href="lib/katex/katex.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-tab="fly">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-fly" viewBox="0 0 24 24"><path d="M2 14.5h12.5l5-3.5H22l-3 5.5H4.5z"/><path d="M8.5 14.5 11 8h2.5l-1.2 6.5"/><path d="M2 19.5c3 1.3 6 1.3 9 0s6-1.3 9 0"/></symbol>
+  <symbol id="i-hangar" viewBox="0 0 24 24"><path d="M3 20V10l9-6 9 6v10"/><path d="M7 20v-6h10v6"/><path d="M3 20h18"/></symbol>
+  <symbol id="i-exp" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 20V9"/><path d="M11 20v-6"/><path d="M16 20V5"/><circle cx="6" cy="6" r="1.4"/><circle cx="11" cy="11" r="1.4"/><circle cx="16" cy="3" r="1.2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+</svg>
+
+<header class="top">
+  <a class="brand" href="#" data-goto="fly" aria-label="Экраноплан-лаборатория, к полёту">
+    <svg class="brand-mark" viewBox="0 0 40 24" aria-hidden="true"><path d="M2 15h22l8-5.5h5L31.5 17H6z" /><path d="M13 15l4-9h4l-2 9"/><path d="M1 21c4 1.6 9 1.6 13 0s9-1.6 13 0 9 1.6 12 0" fill="none"/></svg>
+    <span class="brand-name">Экраноплан-лаборатория</span>
+  </a>
+  <nav class="tabs" aria-label="Разделы">
+    <button class="tab" data-tab="fly" aria-current="page"><svg class="ic"><use href="#i-fly"/></svg><span>Полёт</span></button>
+    <button class="tab" data-tab="hangar"><svg class="ic"><use href="#i-hangar"/></svg><span>Ангар</span></button>
+    <button class="tab" data-tab="exp"><svg class="ic"><use href="#i-exp"/></svg><span>Опыт и расчёт</span></button>
+    <button class="tab" data-tab="how"><svg class="ic"><use href="#i-book"/></svg><span>Как это работает</span></button>
+  </nav>
+</header>
+
+<main class="layout" id="layout">
+  <aside class="panel left" id="leftPanel">
+    <section data-pane="fly" class="pane">
+      <label class="select">
+        <span class="lbl">Аппарат</span>
+        <select id="presetSel"></select>
+      </label>
+      <div id="modeBox" class="seg-control" role="group" aria-label="Режим полёта"></div>
+      <div id="controls"></div>
+      <div class="row-btns nowrap">
+        <button id="trimBtn" class="btn grow">Подобрать угол атаки</button>
+        <button id="resetBtn" class="btn ghost square" aria-label="Сбросить" title="Сбросить"><svg class="ic"><use href="#i-reset"/></svg></button>
+      </div>
+    </section>
+    <section data-pane="hangar" class="pane hidden">
+      <h2 class="pane-title">Ангар</h2>
+      <div id="hangarList" class="hangar-list"></div>
+      <button id="hangarAll" class="btn ghost wide">Показать все аппараты</button>
+    </section>
+    <section data-pane="exp" class="pane hidden">
+      <h2 class="pane-title">Сравнение опыта с расчётом</h2>
+      <p class="muted">Расчёт идёт для пресета «Наша модель» с ползунками вкладки «Полёт».</p>
+      <h3>Опыт 1: дальность полёта</h3>
+      <p class="muted small">Строка: высота запуска (см) и средняя дальность (см) через пробел или «;».</p>
+      <textarea id="exp1Data" rows="6" placeholder="3 182&#10;6 216&#10;12 261"></textarea>
+      <div class="row-btns">
+        <label class="btn ghost file">CSV-файл<input type="file" id="exp1File" accept=".csv,.txt"></label>
+        <button id="exp1Example" class="btn ghost">Пример</button>
+      </div>
+      <div class="row-btns">
+        <button id="exp1Run" class="btn">Рассчитать</button>
+        <button id="exp1Fit" class="btn ghost" title="Подбирает скорость запуска так, чтобы расчёт совпал с опытом для самой высокой точки">Подобрать скорость</button>
+      </div>
+      <h3>Опыт 2: весы и вентилятор</h3>
+      <p class="muted small">Строка: зазор до «земли» (см) и помощь экрана (%).</p>
+      <textarea id="exp2Data" rows="5" placeholder="8 2&#10;4 6&#10;2 15&#10;1 30"></textarea>
+      <label class="select inline"><span>Угол атаки крыла, °</span><input id="rigAlpha" type="number" value="8" min="0" max="15" step="0.5"></label>
+      <div class="row-btns"><button id="exp2Run" class="btn">Рассчитать</button></div>
+    </section>
+  </aside>
+
+  <section class="stage" id="stage">
+    <div id="view3d" class="view3d"></div>
+    <div id="labels" class="labels" aria-hidden="true"></div>
+    <div class="overlay top-left chip" id="ovTitle"></div>
+    <div class="overlay top-right toggles" id="toggles" role="group" aria-label="Что показывать на сцене">
+      <span class="toggles-title"><svg class="ic"><use href="#i-eye"/></svg>Показать</span>
+      <button class="tog on" data-show="lift" aria-pressed="true"><i style="--c:var(--lift)"></i>Подъёмная сила</button>
+      <button class="tog on" data-show="weight" aria-pressed="true"><i style="--c:var(--weight)"></i>Вес</button>
+      <button class="tog on" data-show="drag" aria-pressed="true"><i style="--c:var(--drag)"></i>Сопротивление</button>
+      <button class="tog on" data-show="ge" aria-pressed="true"><i style="--c:var(--ge)"></i>Экранный эффект</button>
+    </div>
+    <div class="overlay bottom-left chip" id="ovState"></div>
+    <label class="overlay bottom-right ge-switch" id="geSwitch">
+      <input type="checkbox" id="geToggle" checked>
+      <span class="sw" aria-hidden="true"></span>
+      <span>Экранный эффект в расчёте</span>
+    </label>
+  </section>
+
+  <aside class="panel right" id="rightPanel">
+    <section data-pane="fly" class="pane">
+      <div id="outputs" class="outputs"></div>
+    </section>
+    <section data-pane="exp" class="pane hidden">
+      <div class="chartbox"><h3>Опыт 1: дальность и высота запуска</h3><canvas id="expChart1"></canvas></div>
+      <div id="exp1Table"></div>
+      <div class="chartbox"><h3>Опыт 2: помощь экрана и зазор</h3><canvas id="expChart2"></canvas></div>
+      <div id="exp2Table"></div>
+    </section>
+  </aside>
+</main>
+
+<section class="docs" id="docs" hidden>
+  <nav class="docs-toc" id="docsToc" aria-label="Содержание"></nav>
+  <article class="docs-body" id="docsBody"></article>
+</section>
+
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script>
+  if (!window.THREE) {
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"><\/script>');
+    document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"><\/script>');
+  }
+</script>
+<script src="lib/katex/katex.min.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/data.js"></script>
+<script src="js/bodies.js"></script>
+<script src="js/models.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/docs.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
